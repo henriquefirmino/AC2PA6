@@ -1,20 +1,15 @@
-let express = require("express");
-let app = express();
-let httpServer = require("http").createServer(app);
-let io = require("socket.io")(httpServer);
+const express = require('express');
+const app = express();
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
+const port = process.env.PORT || 5500;
 
-let connections = [];
+app.use(express.static(__dirname + '/public'));
 
-io.on("connect", (socket) => {
-    connections.push(socket);
-    console.log(`${socket.id} has connected`);
+function onConnection(socket){
+  socket.on('drawing', (data) => socket.broadcast.emit('drawing', data));
+}
 
-    socket.on("propogate", (data) => {
-        connections.map((con) => {
-            if(con.id !== socket.id) {
-                con.emit("onpropogate", data);
-            }
-        });
-    });
-    
-})
+io.on('connection', onConnection);
+
+http.listen(port, () => console.log('listening on port ' + port));
